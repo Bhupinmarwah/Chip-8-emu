@@ -1,5 +1,7 @@
 #include "Chip8.hpp"
 #include <fstream>
+#include <cstring>
+#include <chrono>
 
 const unsigned int START_ADDRESS = 0x200;
 
@@ -30,7 +32,9 @@ uint8_t fonset[FONTSET_SIZE] = {
 
 //Constructor
 Chip8::Chip8()
+    : randGen(std::chrono::system_clock::now().time_since_epoch().count())
 {
+    randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
     //Set this to start address, since we want to start reading instructions from here
     pc = START_ADDRESS;
 
@@ -57,4 +61,146 @@ void Chip8::LoadRom(char const* filename)
         //free the memory
         delete[] buffer;
     }
+}
+
+void Chip8::OP_00E0()
+{
+    //We want to clear the video buffer
+    memset(video, 0, sizeof(video));
+}
+
+void Chip8::OP_00EE()
+{
+    //We want to remove the top of the stack since we are returning from it
+    --stackPointer;
+
+    //set the program counter to the value in the stack that matches the stack pointer
+    pc = stack[stackPointer];
+}
+
+void Chip8::OP_1nnn()
+{
+    // Use a and operator between the opcode and 0000_1111_1111_1111.
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t nnn = opcode & 0x0FFFu;
+
+    pc = nnn;
+}
+
+void Chip8::OP_2nnn()
+{
+    // Use a and operator between the opcode and 0000_1111_1111_1111.
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t nnn = opcode & 0x0FFFu;
+
+    //We want to remember the origin
+    stack[stackPointer] = pc;
+    ++stackPointer;
+
+    pc = nnn;
+}
+
+void Chip8::OP_3xkk()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t kk = opcode & 0x00FF;
+
+    if (registers[Vx] == kk) {
+        pc +=2;
+    }
+}
+
+void Chip8::OP_4xkk()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t kk = opcode & 0x00FF;
+
+    if (registers[Vx] != kk) {
+        pc +=2;
+    }
+}
+
+void Chip8::OP_5xy0()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t Vy = (opcode >> 4) & 0x000F;
+
+    if (registers[Vx] == registers[Vy]) {
+        pc +=2;
+    }
+}
+
+void Chip8::OP_6xkk()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t kk = opcode & 0x00FF;
+
+    registers[Vx] = kk;
+}
+
+void Chip8::OP_7xkk()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t kk = opcode & 0x00FF;
+
+    registers[Vx] += kk;
+}
+
+void Chip8::OP_8xy0()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t Vy = (opcode >> 4) & 0x000F;
+
+    registers[Vx] = registers[Vy];
+}
+
+void Chip8::OP_8xy1()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t Vy = (opcode >> 4) & 0x000F;
+
+    registers[Vx] |= registers[Vy];
+}
+
+void Chip8::OP_8xy2()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t Vy = (opcode >> 4) & 0x000F;
+
+    registers[Vx] &= registers[Vy];
+}
+
+void Chip8::OP_8xy3()
+{
+    // Use a and operator between the opcode and 0000_0000_0000_1111.
+    // Use the right shift operator to grab the last 4
+    //We use 0x0FFF because that will remove the first 4 values
+    uint16_t Vx = (opcode >> 8) & 0x000F;
+    uint16_t Vy = (opcode >> 4) & 0x000F;
+
+    registers[Vx] ^= registers[Vy];
 }

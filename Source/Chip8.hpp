@@ -1,10 +1,79 @@
 #pragma once
 #include <stdint.h>
+#include <random>
 
 class Chip8
 {
 private:
-    /* data */
+std::default_random_engine randGen;
+std::uniform_int_distribution<uint8_t> randByte;
+
+//INSTRUCTIONS or OPCODE
+
+/*
+00E0:CLS = This will clear the display
+*/
+void OP_00E0();
+
+/*
+00EE:RET = This will return from a subroutine.
+*/
+void OP_00EE();
+
+/*
+1nnn:JP = This will grab the last 12 of the binary from 16 bit and set that to the program counter.
+*/
+void OP_1nnn();
+
+/*
+2nnn:CALL = This will call the instruction at nnn.
+*/
+void OP_2nnn();
+
+/*
+3xkk:CALL = This will skip the next instruction if Vx = kk.
+*/
+void OP_3xkk();
+
+/*
+4xkk:CALL = This will skip the next instruction if Vx != kk.
+*/
+void OP_4xkk();
+
+/*
+5xy0:CALL = This will skip the next instruction if Vx = Vy.
+*/
+void OP_5xy0();
+
+/*
+6xkk:CALL = This will set Vx=kk.
+*/
+void OP_6xkk();
+
+/*
+7xkk:CALL = This will set add Vx = Vx + kk.
+*/
+void OP_7xkk();
+
+/*
+8xy0:CALL = This will set Vx = Vy.
+*/
+void OP_8xy0();
+
+/*
+8xy1:CALL = This will set Vx = Vx or Vy. This means it will grab the binary ones from either
+*/
+void OP_8xy1();
+
+/*
+8xy2:CALL = This will set Vx = Vx and Vy. This means it will grab the binary ones only if both have the one
+*/
+void OP_8xy2();
+
+/*
+8xy3:CALL = This will set Vx = Vx XOR Vy. This means it will grab the binary ones only if one is 1 and the other is 0
+*/
+void OP_8xy3();
 public:
     uint8_t registers[16]{};//16 8 bit registers
     uint8_t memory[4096]{}; //4k bytes of memory
